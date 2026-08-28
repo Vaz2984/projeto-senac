@@ -54,7 +54,45 @@ só em `localhost`), siga o deploy abaixo.
 > Plano gratuito do Render "dorme" depois de um tempo sem uso e demora
 > alguns segundos para acordar na primeira requisição — normal, não é bug.
 
-### Alternativas (Railway / Fly.io / servidor próprio)
+## Deploy na Vercel
+
+A Vercel roda o backend como **função serverless** (não como um servidor
+sempre ligado) — por isso o projeto já vem com `backend/vercel.json` e
+`backend/api/index.js`, que reexporta o mesmo app Express usado no Render.
+Nenhuma rota muda: `/api/analyze` e `/api/health` funcionam idênticos.
+
+1. Suba este repositório para o seu GitHub (se ainda não estiver lá).
+2. Em [vercel.com](https://vercel.com) → **Add New → Project** → importe o
+   repositório.
+3. Em **Root Directory**, aponte para `backend` (não a raiz do
+   monorepo) — é onde estão o `vercel.json`, o `package.json` e o `api/`.
+4. Framework Preset: **Other** (não é Next.js). Build/Install command podem
+   ficar no padrão (`npm install`); não é preciso Build Command customizado.
+5. Em **Environment Variables**, adicione (ambas opcionais)
+   `GOOGLE_FACT_CHECK_API_KEY` e `ANTHROPIC_API_KEY`.
+6. **Deploy**. A URL pública fica algo como
+   `https://factai-backend.vercel.app` — é essa que vai nas opções da
+   extensão.
+
+Depois de qualquer mudança nas variáveis de ambiente, faça um **redeploy**
+(a Vercel não recarrega env vars em funções já publicadas sozinha).
+
+**Particularidades do modelo serverless da Vercel** (diferente de
+Render/Railway/VPS, que mantêm um processo sempre rodando):
+- O rate limiting (`express-rate-limit`) guarda contagem em memória por
+  instância — em serverless isso é "melhor esforço": instâncias frias
+  novas resetam a contagem. Continua barrando picos óbvios de abuso, só não
+  é tão preciso quanto num servidor único sempre ligado.
+- Cada função tem um limite de tempo de execução configurável em
+  `vercel.json` (`functions.api/index.js.maxDuration`, já definido como 30s
+  no projeto). Se o sinal de IA demorar mais que isso, a análise falha por
+  timeout — nesse caso aumente `maxDuration` (dentro do limite do seu
+  plano na Vercel) ou consulte os limites atuais em
+  [vercel.com/docs/functions/limitations](https://vercel.com/docs/functions/limitations).
+- "Cold start" (primeira requisição depois de um tempo sem uso) pode levar
+  um instante a mais — normal, não é bug.
+
+### Outras alternativas (Railway / Fly.io / servidor próprio)
 
 - **Railway**: New Project → Deploy from GitHub → aponte a raiz para
   `backend/` → configure as mesmas variáveis de ambiente do `.env.example`

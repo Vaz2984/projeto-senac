@@ -43,8 +43,10 @@ Veja o passo a passo completo de deploy e de como conseguir cada chave em
 
 1. **Deploy do backend** (obrigatório, é o que faz a extensão funcionar de
    verdade e não só em localhost): siga
-   [`backend/README.md`](backend/README.md) — o caminho mais rápido é o
-   Render, com um Blueprint pronto (`backend/render.yaml`).
+   [`backend/README.md`](backend/README.md) — funciona tanto no Render
+   (Blueprint pronto em `backend/render.yaml`) quanto na Vercel
+   (`backend/vercel.json` + `backend/api/index.js` já incluídos), além de
+   Railway, Fly.io ou servidor próprio.
 2. **Build e instalação da extensão**: siga
    [`extension/README.md`](extension/README.md) — `npm run build` gera os
    pacotes para Chrome/Edge e Firefox.

@@ -82,9 +82,16 @@ if (!process.env.ANTHROPIC_API_KEY) {
   console.warn('[server] ANTHROPIC_API_KEY não configurada — sinal de IA desativado.');
 }
 
-app.listen(PORT, () => {
-  // eslint-disable-next-line no-console
-  console.log(`[server] FactAI backend rodando na porta ${PORT}`);
-});
+// Só sobe um servidor HTTP "de verdade" quando este arquivo é executado
+// diretamente (Render/Railway/Fly/Docker/local com `node src/server.js`).
+// Em ambiente serverless (Vercel), o app é importado e invocado por
+// requisição por api/index.js — chamar app.listen() nesse caso não faz
+// sentido (não há porta pra escutar) e emitiria um aviso à toa.
+if (require.main === module) {
+  app.listen(PORT, () => {
+    // eslint-disable-next-line no-console
+    console.log(`[server] FactAI backend rodando na porta ${PORT}`);
+  });
+}
 
 module.exports = app;
