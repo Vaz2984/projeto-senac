@@ -6,12 +6,16 @@ const TIMEOUT_MS = 8000;
 // Vocabulário de "veredito" usado por diferentes agências de checagem (PT/EN),
 // normalizado para uma pontuação -1 (falso) .. +1 (verdadeiro). Textos que não
 // batem com nada aqui contam como neutro (0) mas ainda aparecem como referência.
+// ORDEM IMPORTA: como o teste é por substring, os padrões mais específicos
+// ("mostly false", "parcialmente verdadeiro") precisam vir antes dos genéricos
+// ("false", "verdadeiro") — senão o genérico casa primeiro e o resultado fica
+// errado (ex.: "Mostly False" caindo no bucket -1 em vez de -0.3).
 const RATING_KEYWORDS = [
-  { score: -1, patterns: [/falso/i, /fake/i, /false/i, /pants on fire/i, /mentira/i, /enganoso.*falso/i] },
-  { score: -0.6, patterns: [/enganoso/i, /misleading/i, /exagerad/i, /distorcid/i, /sem contexto/i, /fora de contexto/i, /out of context/i] },
   { score: -0.3, patterns: [/parcialmente falso/i, /mostly false/i, /half true/i, /meia verdade/i] },
   { score: 0.3, patterns: [/parcialmente verdadeiro/i, /mostly true/i] },
+  { score: -0.6, patterns: [/enganoso/i, /misleading/i, /exagerad/i, /distorcid/i, /sem contexto/i, /fora de contexto/i, /out of context/i] },
   { score: 1, patterns: [/verdadeiro/i, /^true$/i, /correct/i, /accurate/i] },
+  { score: -1, patterns: [/falso/i, /fake/i, /false/i, /pants on fire/i, /mentira/i] },
 ];
 
 function normalizeRating(textualRating) {

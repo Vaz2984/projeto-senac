@@ -129,14 +129,27 @@ FactAIBrowserAPI.runtime.onMessage.addListener((message, sender, sendResponse) =
       sendResponse({ status: 'error', message: 'Aba inválida.' });
       return false;
     }
+    // O content script devolve o resultado REAL da nova análise (mesmo
+    // formato do FACTAI_ANALYZE) — repassado direto, sem o popup precisar
+    // adivinhar quanto tempo esperar.
     FactAIBrowserAPI.tabs
       .sendMessage(tabId, { type: 'FACTAI_REQUEST_REANALYZE' })
-      .then(() => sendResponse({ ok: true }))
-      .catch((err) =>
+      .then((response) => {
+        if (response && response.ok && response.result) {
+          sendResponse(response.result);
+        } else if (response && response.reason === 'insufficient_text') {
+          sendResponse({ status: 'error', message: 'Esta página não parece ter texto de notícia suficiente para analisar.' });
+        } else {
+          sendResponse({
+            status: 'error',
+            message: 'Não foi possível reanalisar esta página (recarregue a aba e tente novamente).',
+          });
+        }
+      })
+      .catch(() =>
         sendResponse({
-          ok: false,
+          status: 'error',
           message: 'Não foi possível reanalisar esta página (recarregue a aba e tente novamente).',
-          debug: err && err.message,
         }),
       );
     return true;

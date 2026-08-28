@@ -113,10 +113,10 @@ async function loadResult() {
 
 async function triggerReanalyze() {
   showState('loadingState');
-  await FactAIBrowserAPI.runtime.sendMessage({ type: 'FACTAI_REANALYZE', tabId: currentTabId });
-  // O content script leva um instante para extrair e o background para
-  // responder; dá um tempo curto antes de buscar o resultado atualizado.
-  setTimeout(loadResult, 1200);
+  // FACTAI_REANALYZE já devolve o resultado real da nova análise (o
+  // background espera o content script terminar) — sem timeout chutado.
+  const result = await FactAIBrowserAPI.runtime.sendMessage({ type: 'FACTAI_REANALYZE', tabId: currentTabId });
+  renderFromBackgroundResult(result);
 }
 
 function openOptionsPage() {

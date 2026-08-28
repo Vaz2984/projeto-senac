@@ -7,6 +7,7 @@
 /* global FactAIBrowserAPI */
 
 const MAX_TEXT_CHARS = 20000;
+const MAX_URL_CHARS = 2048; // mesmo limite de backend/src/routes/analyze.js (MAX_FIELD_LENGTHS.url)
 
 function metaContent(selectors) {
   for (const sel of selectors) {
@@ -84,7 +85,7 @@ function extractMainText() {
 
 function extractArticle() {
   return {
-    url: location.href,
+    url: location.href.slice(0, MAX_URL_CHARS),
     domain: location.hostname,
     title: extractTitle().slice(0, 500),
     text: extractMainText(),
@@ -93,13 +94,20 @@ function extractArticle() {
   };
 }
 
+// Devolve o resultado da análise (não só dispara e esquece) para que um
+// pedido explícito de reanálise (vindo do popup) possa mostrar o resultado
+// real assim que ele chegar, em vez de um popup adivinhar quanto tempo esperar.
 function requestAnalysis() {
   const article = extractArticle();
   // Páginas sem texto suficiente (ex.: home de e-commerce, app) não valem análise.
-  if (article.text.length < 150) return;
-  FactAIBrowserAPI.runtime.sendMessage({ type: 'FACTAI_ANALYZE', article }).catch(() => {
-    // Background pode não estar pronto ainda (ex.: extensão recém-instalada) — ignora silenciosamente.
-  });
+  if (article.text.length < 150) return Promise.resolve({ ok: false, reason: 'insufficient_text' });
+  return FactAIBrowserAPI.runtime
+    .sendMessage({ type: 'FACTAI_ANALYZE', article })
+    .then((result) => ({ ok: true, result }))
+    .catch(() => ({ ok: false, reason: 'background_unreachable' }));
+  // "background_unreachable": acontece se o background não estiver pronto
+  // ainda (ex.: extensão recém-instalada) — ignorado na carga automática,
+  // mas repassado numa reanálise manual (ver listener FACTAI_REQUEST_REANALYZE).
 }
 
 // Roda na carga inicial da página.
@@ -117,11 +125,12 @@ const observer = new MutationObserver(() => {
 });
 observer.observe(document.documentElement, { childList: true, subtree: true });
 
-// Responde a pedidos manuais de reanálise vindos do popup.
+// Responde a pedidos manuais de reanálise vindos do popup (via background),
+// devolvendo o resultado real assim que a análise termina.
 FactAIBrowserAPI.runtime.onMessage.addListener((message, sender, sendResponse) => {
   if (message && message.type === 'FACTAI_REQUEST_REANALYZE') {
-    requestAnalysis();
-    sendResponse({ ok: true });
+    requestAnalysis().then(sendResponse);
+    return true; // resposta assíncrona
   }
   return false;
 });
