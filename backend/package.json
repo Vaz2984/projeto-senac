@@ -1,0 +1,25 @@
+{
+  "name": "factai-backend",
+  "version": "1.0.0",
+  "private": true,
+  "description": "FactAI - backend de análise de notícias (semáforo verde/amarelo/vermelho) para a extensão de navegador.",
+  "main": "src/server.js",
+  "type": "commonjs",
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "scripts": {
+    "start": "node src/server.js",
+    "dev": "node --watch src/server.js",
+    "check": "node --check src/server.js"
+  },
+  "dependencies": {
+    "@anthropic-ai/sdk": "^0.122.0",
+    "cors": "^2.8.5",
+    "express": "^4.19.2",
+    "express-rate-limit": "^7.4.0",
+    "helmet": "^7.1.0",
+    "zod": "^3.23.8"
+  },
+  "license": "MIT"
+}

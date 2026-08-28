@@ -1,0 +1,25 @@
+# Blueprint do Render (render.com) para deploy em poucos cliques.
+# Como usar: Render → New → Blueprint → aponte para este repositório → Render
+# detecta este arquivo automaticamente. Depois do deploy, preencha as
+# variáveis marcadas como "sync: false" no painel do serviço (Environment).
+services:
+  - type: web
+    name: factai-backend
+    runtime: node
+    plan: free
+    region: oregon
+    rootDir: backend
+    buildCommand: npm install
+    startCommand: node src/server.js
+    healthCheckPath: /api/health
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: RATE_LIMIT_MAX
+        value: "60"
+      - key: ALLOWED_ORIGINS
+        value: ""
+      - key: GOOGLE_FACT_CHECK_API_KEY
+        sync: false
+      - key: ANTHROPIC_API_KEY
+        sync: false

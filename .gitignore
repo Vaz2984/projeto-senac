@@ -1,0 +1,18 @@
+# Dependências
+node_modules/
+
+# Variáveis de ambiente (nunca commitar chaves reais)
+.env
+.env.local
+*.env
+
+# Build da extensão
+extension/dist/
+*.zip
+
+# Logs e temporários
+*.log
+.DS_Store
+
+# Configuração local do Claude Code (específica desta máquina/sessão)
+.claude/settings.local.json

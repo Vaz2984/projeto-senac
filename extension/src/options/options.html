@@ -1,0 +1,43 @@
+<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="utf-8" />
+    <title>FactAI — Configurações</title>
+    <link rel="stylesheet" href="options.css" />
+  </head>
+  <body>
+    <main class="wrap">
+      <h1>FactAI — Configurações</h1>
+      <p class="muted">
+        O FactAI depende de um backend hospedado por você na nuvem (não usa localhost). Faça o
+        deploy seguindo o <code>backend/README.md</code> do projeto e cole a URL pública abaixo.
+      </p>
+
+      <label class="field-label" for="backendUrl">URL do backend</label>
+      <input
+        id="backendUrl"
+        type="url"
+        placeholder="https://seu-backend.onrender.com"
+        autocomplete="off"
+      />
+      <p class="hint">Exemplo: <code>https://factai-backend.onrender.com</code> (sem barra no final).</p>
+
+      <div class="actions">
+        <button id="saveBtn" class="btn btn-primary">Salvar</button>
+        <button id="testBtn" class="btn btn-secondary">Testar conexão</button>
+      </div>
+
+      <p id="statusMessage" class="status"></p>
+
+      <section class="signals-box">
+        <h2>Sinais ativos no backend</h2>
+        <ul id="signalsList" class="signals-list">
+          <li class="muted">Teste a conexão para ver quais sinais estão configurados.</li>
+        </ul>
+      </section>
+    </main>
+
+    <script src="../browserApi.js"></script>
+    <script src="options.js"></script>
+  </body>
+</html>
