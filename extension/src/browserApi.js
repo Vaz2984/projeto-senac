@@ -25,6 +25,11 @@ function promisify(fn, thisArg) {
     });
 }
 
+// `chrome.tabs` e `chrome.action` só existem em páginas de extensão
+// (background/popup/options) — em content scripts eles são `undefined`, e
+// acessar `chrome.tabs.query` de forma antecipada (fora de uma função)
+// lançaria erro e quebraria a extensão em toda página visitada. Por isso os
+// dois só são montados quando a API correspondente realmente existe.
 const FactAIBrowserAPI = {
   isFirefox,
   storage: {
@@ -35,12 +40,14 @@ const FactAIBrowserAPI = {
       ? (items) => browser.storage.local.set(items)
       : promisify(chrome.storage.local.set, chrome.storage.local),
   },
-  tabs: {
-    query: isFirefox ? (q) => browser.tabs.query(q) : promisify(chrome.tabs.query, chrome.tabs),
-    sendMessage: isFirefox
-      ? (tabId, msg) => browser.tabs.sendMessage(tabId, msg)
-      : promisify(chrome.tabs.sendMessage, chrome.tabs),
-  },
+  tabs: rootApi.tabs
+    ? {
+        query: isFirefox ? (q) => browser.tabs.query(q) : promisify(chrome.tabs.query, chrome.tabs),
+        sendMessage: isFirefox
+          ? (tabId, msg) => browser.tabs.sendMessage(tabId, msg)
+          : promisify(chrome.tabs.sendMessage, chrome.tabs),
+      }
+    : undefined,
   runtime: {
     sendMessage: isFirefox
       ? (msg) => browser.runtime.sendMessage(msg)
