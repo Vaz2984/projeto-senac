@@ -41,6 +41,17 @@ const CATEGORY_SCORE = {
   satire: -0.6,
 };
 
+// Domínio desconhecido (não é a maioria esmagadora dos sites reais — a base
+// local só cobre um punhado de grandes portais e alguns fakes já
+// desmentidos). Antes esse caso ficava de fora do cálculo (contribution:
+// null), o que na prática dava carta branca: sem GOOGLE_FACT_CHECK_API_KEY
+// nem ANTHROPIC_API_KEY configuradas, sobrava só a heurística de texto, que
+// começa "confiável" e só desconta com clickbait óbvio — então qualquer site
+// nunca visto, mas bem escrito, saía sempre verde/100, mesmo sendo fake news.
+// Um leve desconto por padrão evita esse viés estrutural pro positivo, sem
+// presumir que todo site desconhecido é fake.
+const UNKNOWN_DOMAIN_CONTRIBUTION = -0.2;
+
 const CATEGORY_LABEL_PT = {
   reliable: 'fonte com histórico de checagem editorial',
   questionable: 'fonte com viés forte ou baixo rigor de apuração conhecido',
@@ -84,22 +95,24 @@ function lookupDomain(rawDomain) {
 }
 
 /**
- * Sinal de reputação de domínio: sempre disponível, sem custo, sem chamada
- * de rede. Retorna null quando o domínio é desconhecido (não entra na média
- * do scorer, não "puxa" o score para nenhum lado).
+ * Sinal de reputação de domínio: sempre disponível (contanto que exista um
+ * host pra avaliar), sem custo, sem chamada de rede. Domínio desconhecido
+ * NÃO fica de fora do cálculo — entra com um desconto leve (ver
+ * UNKNOWN_DOMAIN_CONTRIBUTION) em vez de neutro, pra site nunca visto não
+ * sair automaticamente com nota máxima só por falta de heurística óbvia.
  */
 function analyzeDomain(rawDomain) {
   const { known, category, host } = lookupDomain(rawDomain);
 
   if (!known) {
     return {
-      available: false,
+      available: Boolean(host),
       host,
       known: false,
-      category: null,
-      contribution: null,
+      category: 'unknown',
+      contribution: host ? UNKNOWN_DOMAIN_CONTRIBUTION : null,
       reason: host
-        ? `Domínio "${host}" não consta na base local (nem confiável nem desmentido) — sinal de domínio não usado.`
+        ? `Domínio "${host}" não consta na base local de fontes conhecidas — tratado com cautela por padrão (fonte não verificada, nem confiável nem desmentida).`
         : null,
     };
   }
