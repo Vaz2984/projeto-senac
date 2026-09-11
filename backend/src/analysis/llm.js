@@ -116,7 +116,10 @@ async function analyzeWithLLM({ title, text, domain }, apiKey) {
       return { available: false, reason: 'Limite de uso da API da Anthropic atingido — tente novamente mais tarde.' };
     }
     if (err instanceof Anthropic.APIError) {
-      return { available: false, reason: `Erro na API da Anthropic (${err.status}).` };
+      // eslint-disable-next-line no-console
+      console.error('[llm] erro da API da Anthropic:', err.status, err.message, JSON.stringify(err.error || {}));
+      const detail = err.message ? `: ${err.message}` : '';
+      return { available: false, reason: `Erro na API da Anthropic (${err.status})${detail}.` };
     }
     const timedOut = err && (err.name === 'APIConnectionTimeoutError' || /timeout/i.test(err.message || ''));
     return {
