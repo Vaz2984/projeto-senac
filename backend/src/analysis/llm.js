@@ -1,7 +1,14 @@
 'use strict';
 
 const Anthropic = require('@anthropic-ai/sdk');
-const { z } = require('zod');
+// IMPORTANTE: importar de 'zod/v4' (subcaminho incluído a partir do zod
+// 3.25+), não do pacote 'zod' clássico. O helper zodOutputFormat do SDK da
+// Anthropic gera o JSON Schema usando o conversor interno do Zod v4
+// (zod/v4/core/to-json-schema), que espera schemas construídos com essa
+// API — um schema criado via `require('zod')` (v3 clássico) tem estrutura
+// interna incompatível e derruba a análise com
+// "Cannot read properties of undefined (reading 'def')" em toda chamada.
+const { z } = require('zod/v4');
 const { zodOutputFormat } = require('@anthropic-ai/sdk/helpers/zod');
 
 const DEFAULT_MODEL = 'claude-opus-5';
