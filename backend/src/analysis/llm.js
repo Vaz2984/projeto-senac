@@ -69,7 +69,17 @@ async function analyzeWithLLM({ title, text, domain }, apiKey) {
     return { available: false, reason: 'Sem texto de artigo suficiente para a IA analisar.' };
   }
 
-  const client = new Anthropic({ apiKey });
+  // Chaves de API de organização (em vez de vinculadas a um workspace
+  // específico) exigem o header anthropic-workspace-id em toda requisição —
+  // sem ele, a API responde 400 "This API key is not scoped to a
+  // workspace...". Configurável via ANTHROPIC_WORKSPACE_ID; a maioria das
+  // chaves criadas normalmente pelo console (já dentro de um workspace) não
+  // precisa disso.
+  const workspaceId = process.env.ANTHROPIC_WORKSPACE_ID;
+  const client = new Anthropic({
+    apiKey,
+    defaultHeaders: workspaceId ? { 'anthropic-workspace-id': workspaceId } : undefined,
+  });
 
   try {
     const response = await client.messages.parse(

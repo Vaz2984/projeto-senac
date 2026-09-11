@@ -117,7 +117,14 @@ Render/Railway/VPS, que mantêm um processo sempre rodando):
 ### Anthropic API (Claude) — uso pago, poucos centavos por análise
 
 1. Crie uma conta em [console.anthropic.com](https://console.anthropic.com/).
-2. Vá em **API Keys → Create Key**.
+2. **Importante**: com um **workspace específico selecionado** (não "toda a
+   organização") no seletor no topo do console, vá em **API Keys → Create
+   Key**. Se a chave for criada sem um workspace selecionado, toda
+   requisição falha com `400 — This API key is not scoped to a workspace`.
+   Se isso já aconteceu com você, o mais simples é apagar essa chave e criar
+   uma nova com um workspace selecionado — alternativa sem trocar a chave:
+   preencha `ANTHROPIC_WORKSPACE_ID` no `.env`/variáveis de ambiente com o
+   ID do workspace (**Settings → Workspaces** no console).
 3. Copie a chave (começa com `sk-ant-...`) e cole em `ANTHROPIC_API_KEY`.
 4. **Nunca** cole essa chave na extensão nem em nenhum lugar público — ela
    fica só nas variáveis de ambiente do servidor.
