@@ -32,8 +32,16 @@ function upperCaseRatio(text) {
 
 /**
  * Sinal heurístico: sempre disponível, sem custo, sem chamada de rede.
- * Cada achado soma/subtrai um pouco do score e vira um motivo textual.
  * Retorna contribution em -1..+1.
+ *
+ * IMPORTANTE: a base é NEUTRA (0), não "confiável por padrão". Texto sem
+ * nenhum sinal — nem de alerta, nem de apuração (sem autor, sem data,
+ * curto) — fica em 0, não em +1. Só sobe com sinais concretos de apuração
+ * (autor, data, texto com tamanho razoável) e só desce com sinais de
+ * sensacionalismo. Isso evita que texto desconhecido saia "confiável" só
+ * por não ter clickbait óbvio — a heurística sozinha nunca chega ao
+ * extremo +1 (a confiança máxima depende de outros sinais: domínio
+ * conhecido, fact-check, IA).
  */
 function analyzeHeuristics({ title = '', text = '', author = '', publishedDate = '' } = {}) {
   const safeTitle = typeof title === 'string' ? title : '';
@@ -41,7 +49,27 @@ function analyzeHeuristics({ title = '', text = '', author = '', publishedDate =
   const combined = `${safeTitle}\n${safeText.slice(0, 4000)}`;
 
   const findings = [];
-  let penalty = 0;
+  let credibility = 0; // sinais de apuração (autor, data, tamanho) somam aqui
+  let penalty = 0; // sinais de sensacionalismo (clickbait, caixa alta, pontuação) somam aqui
+
+  if (author && author.trim()) {
+    credibility += 0.15;
+  }
+  if (publishedDate && publishedDate.trim()) {
+    credibility += 0.15;
+  }
+  if (safeText.trim().length >= 400) {
+    credibility += 0.1;
+  } else if (safeText.trim().length > 0) {
+    penalty += 0.1;
+    findings.push('Texto do artigo muito curto para uma apuração jornalística típica.');
+  }
+  if (!author || !author.trim()) {
+    findings.push('Nenhum autor identificado na página.');
+  }
+  if (!publishedDate || !publishedDate.trim()) {
+    findings.push('Nenhuma data de publicação identificada na página.');
+  }
 
   for (const pattern of CLICKBAIT_PATTERNS) {
     if (pattern.test(combined)) {
@@ -63,22 +91,7 @@ function analyzeHeuristics({ title = '', text = '', author = '', publishedDate =
     findings.push('Uso de pontuação exagerada ("!!!", "???") no título ou texto.');
   }
 
-  if (!author || !author.trim()) {
-    penalty += 0.1;
-    findings.push('Nenhum autor identificado na página.');
-  }
-
-  if (!publishedDate || !publishedDate.trim()) {
-    penalty += 0.1;
-    findings.push('Nenhuma data de publicação identificada na página.');
-  }
-
-  if (safeText.trim().length > 0 && safeText.trim().length < 400) {
-    penalty += 0.1;
-    findings.push('Texto do artigo muito curto para uma apuração jornalística típica.');
-  }
-
-  const contribution = Math.max(-1, 1 - penalty * 1.5); // começa em "neutro/positivo" e vai caindo
+  const contribution = Math.max(-1, Math.min(1, credibility - penalty));
 
   return {
     available: true,
@@ -86,7 +99,7 @@ function analyzeHeuristics({ title = '', text = '', author = '', publishedDate =
     findings,
     reason: findings.length
       ? findings.join(' ')
-      : 'Nenhum sinal de sensacionalismo óbvio encontrado no texto.',
+      : 'Nenhum sinal de sensacionalismo óbvio encontrado no texto, mas isso sozinho não confirma que a fonte é confiável.',
   };
 }
 

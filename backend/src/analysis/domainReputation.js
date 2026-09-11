@@ -105,11 +105,15 @@ function analyzeDomain(rawDomain) {
   const { known, category, host } = lookupDomain(rawDomain);
 
   if (!known) {
+    // Duas situações distintas, não confundir: sem host nenhum (ex.: página
+    // sem domínio identificável) não é a mesma coisa que um host real que só
+    // não está na base local — por isso `category` só vira 'unknown' quando
+    // há de fato um domínio a avaliar; sem host, fica `null` (sinal ausente).
     return {
       available: Boolean(host),
       host,
       known: false,
-      category: 'unknown',
+      category: host ? 'unknown' : null,
       contribution: host ? UNKNOWN_DOMAIN_CONTRIBUTION : null,
       reason: host
         ? `Domínio "${host}" não consta na base local de fontes conhecidas — tratado com cautela por padrão (fonte não verificada, nem confiável nem desmentida).`

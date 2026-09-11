@@ -1,0 +1,9 @@
+{
+  "compilerOptions": {
+    "target": "ES2021",
+    "lib": ["ES2021", "DOM"],
+    "checkJs": false,
+    "types": ["chrome", "firefox-webext-browser"]
+  },
+  "include": ["src/**/*.js", "scripts/**/*.js"]
+}
