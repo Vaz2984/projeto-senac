@@ -2,7 +2,7 @@
 
 /* global FactAIBrowserAPI */
 
-const STATES = ['loadingState', 'noDataState', 'notConfiguredState', 'errorState', 'resultState'];
+const STATES = ['loadingState', 'noDataState', 'notConfiguredState', 'errorState', 'notNewsState', 'resultState'];
 
 const VERDICT_LABELS = {
   green: 'Confiável',
@@ -95,6 +95,23 @@ function renderFromBackgroundResult(result) {
     showState('errorState');
     return;
   }
+  if (result.status === 'not_news') {
+    const list = document.getElementById('notNewsReasonsList');
+    list.innerHTML = '';
+    const reasons = result.reasons || [];
+    if (reasons.length) {
+      reasons.forEach((reason) => {
+        const li = document.createElement('li');
+        li.textContent = reason;
+        list.appendChild(li);
+      });
+      list.classList.remove('hidden');
+    } else {
+      list.classList.add('hidden');
+    }
+    showState('notNewsState');
+    return;
+  }
   if (result.status === 'ok') {
     renderResult(result.data);
     return;
@@ -111,11 +128,13 @@ async function loadResult() {
   renderFromBackgroundResult(result);
 }
 
-async function triggerReanalyze() {
+async function triggerReanalyze(force = false) {
   showState('loadingState');
   // FACTAI_REANALYZE já devolve o resultado real da nova análise (o
   // background espera o content script terminar) — sem timeout chutado.
-  const result = await FactAIBrowserAPI.runtime.sendMessage({ type: 'FACTAI_REANALYZE', tabId: currentTabId });
+  // `force`: usado pelo botão "Analisar mesmo assim" em notNewsState, pula
+  // a detecção de "isso é notícia?" feita no content script.
+  const result = await FactAIBrowserAPI.runtime.sendMessage({ type: 'FACTAI_REANALYZE', tabId: currentTabId, force });
   renderFromBackgroundResult(result);
 }
 
@@ -130,9 +149,13 @@ function openOptionsPage() {
 
 document.getElementById('optionsBtn').addEventListener('click', openOptionsPage);
 document.getElementById('goToOptionsBtn').addEventListener('click', openOptionsPage);
-document.getElementById('analyzeBtn').addEventListener('click', triggerReanalyze);
-document.getElementById('retryBtn').addEventListener('click', triggerReanalyze);
-document.getElementById('reanalyzeBtn').addEventListener('click', triggerReanalyze);
+// Sempre via arrow function: addEventListener('click', triggerReanalyze) passaria
+// o próprio Event do clique como 1º argumento (viraria "force" sem querer, já
+// que um Event é sempre truthy) — cada botão precisa controlar force explicitamente.
+document.getElementById('analyzeBtn').addEventListener('click', () => triggerReanalyze(false));
+document.getElementById('retryBtn').addEventListener('click', () => triggerReanalyze(false));
+document.getElementById('reanalyzeBtn').addEventListener('click', () => triggerReanalyze(false));
+document.getElementById('forceAnalyzeBtn').addEventListener('click', () => triggerReanalyze(true));
 
 (async function init() {
   const tabs = await FactAIBrowserAPI.tabs.query({ active: true, currentWindow: true });

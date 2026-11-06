@@ -13,8 +13,9 @@ const BADGE_COLORS = {
   green: '#2fae60',
   yellow: '#e0a100',
   red: '#d64545',
+  not_news: '#9aa0a6',
 };
-const BADGE_TEXT = { green: 'OK', yellow: '!', red: 'X' };
+const BADGE_TEXT = { green: 'OK', yellow: '!', red: 'X', not_news: '–' };
 
 const FETCH_TIMEOUT_MS = 15000;
 
@@ -116,6 +117,20 @@ FactAIBrowserAPI.runtime.onMessage.addListener((message, sender, sendResponse) =
     return true; // resposta assíncrona
   }
 
+  if (message.type === 'FACTAI_NOT_NEWS') {
+    // Content script decidiu (por sinais estruturais, não só tamanho de
+    // texto) que a página não parece uma matéria jornalística — guarda o
+    // estado e pinta um badge neutro (cinza), diferente dos 3 do semáforo,
+    // pra deixar claro que a extensão olhou a página e decidiu não opinar,
+    // em vez de simplesmente não ter rodado ainda.
+    const tabId = sender && sender.tab ? sender.tab.id : null;
+    const result = { status: 'not_news', reasons: message.reasons || [] };
+    if (tabId) resultsByTab.set(tabId, result);
+    setBadge(tabId, 'not_news');
+    sendResponse({ ok: true });
+    return false;
+  }
+
   if (message.type === 'FACTAI_GET_RESULT') {
     const tabId = message.tabId;
     const cached = tabId ? resultsByTab.get(tabId) : null;
@@ -131,14 +146,18 @@ FactAIBrowserAPI.runtime.onMessage.addListener((message, sender, sendResponse) =
     }
     // O content script devolve o resultado REAL da nova análise (mesmo
     // formato do FACTAI_ANALYZE) — repassado direto, sem o popup precisar
-    // adivinhar quanto tempo esperar.
+    // adivinhar quanto tempo esperar. `force` (vindo do botão "Analisar
+    // mesmo assim" no popup) pula a detecção de "isso é notícia?".
     FactAIBrowserAPI.tabs
-      .sendMessage(tabId, { type: 'FACTAI_REQUEST_REANALYZE' })
+      .sendMessage(tabId, { type: 'FACTAI_REQUEST_REANALYZE', force: Boolean(message.force) })
       .then((response) => {
         if (response && response.ok && response.result) {
           sendResponse(response.result);
-        } else if (response && response.reason === 'insufficient_text') {
-          sendResponse({ status: 'error', message: 'Esta página não parece ter texto de notícia suficiente para analisar.' });
+        } else if (response && response.reason === 'not_news_page') {
+          const result = { status: 'not_news', reasons: response.reasons || [] };
+          resultsByTab.set(tabId, result);
+          setBadge(tabId, 'not_news');
+          sendResponse(result);
         } else {
           sendResponse({
             status: 'error',

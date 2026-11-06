@@ -35,6 +35,17 @@
         <button id="retryBtn" class="btn btn-primary">Tentar novamente</button>
       </div>
 
+      <div id="notNewsState" class="state hidden">
+        <p>Esta página não parece ser uma notícia.</p>
+        <ul id="notNewsReasonsList" class="reasons-list hidden"></ul>
+        <p class="muted">
+          O FactAI evita dar um veredito de confiabilidade para páginas que não são matérias
+          jornalísticas (ex.: loja, rede social, documentação). Se isso estiver errado, força a
+          análise mesmo assim abaixo.
+        </p>
+        <button id="forceAnalyzeBtn" class="btn btn-secondary">Analisar mesmo assim</button>
+      </div>
+
       <div id="resultState" class="state hidden">
         <div class="semaphore-row">
           <div id="semaphoreCircle" class="semaphore-circle"></div>

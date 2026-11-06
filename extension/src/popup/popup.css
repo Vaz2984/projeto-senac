@@ -161,6 +161,10 @@ body {
   display: none;
 }
 
+.reasons-list.hidden {
+  display: none;
+}
+
 .section-title {
   font-size: 12px;
   text-transform: uppercase;
