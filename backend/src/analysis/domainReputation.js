@@ -50,7 +50,7 @@ const CATEGORY_SCORE = {
 // nunca visto, mas bem escrito, saía sempre verde/100, mesmo sendo fake news.
 // Um leve desconto por padrão evita esse viés estrutural pro positivo, sem
 // presumir que todo site desconhecido é fake.
-const UNKNOWN_DOMAIN_CONTRIBUTION = -0.2;
+const UNKNOWN_DOMAIN_CONTRIBUTION = -0.25;
 
 const CATEGORY_LABEL_PT = {
   reliable: 'fonte com histórico de checagem editorial',
